@@ -1,0 +1,7 @@
+id = "contextual_chat"
+name = "连续对话"
+description = "在多轮聊天中正确承接前文、昵称和未完成话题"
+enabled = true
+always = true
+triggers = []
+contexts = ["private", "group"]

@@ -1,6 +1,15 @@
-MIT License
+QQBot original source code
+Copyright (c) 2026 Riordon666 and QQBot contributors
 
-Copyright (c) 2026 Riordon666
+Unless a file states otherwise, the original source code and documentation in
+this repository are licensed under the MIT License below.
+
+NapCatQQ and Tencent QQ for Linux are separate third-party products. They are
+not included in or redistributed by this repository, and they are not covered
+by this MIT License. Operators obtain them separately and must comply with
+their respective licenses, terms, and policies. See THIRD_PARTY_NOTICES.md.
+
+MIT License
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

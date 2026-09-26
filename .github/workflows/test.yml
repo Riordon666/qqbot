@@ -1,0 +1,59 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      ONEBOT_ACCESS_TOKEN: ci-validation-only-onebot
+      NAPCAT_WEBUI_TOKEN: ci-validation-only-webui
+      NAPCAT_ACCOUNT: "10000"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.7"
+          enable-cache: true
+
+      - name: Install locked dependencies
+        working-directory: nonebot
+        run: uv sync --frozen --group dev
+
+      - name: Run tests
+        working-directory: nonebot
+        run: uv run --frozen pytest -q
+
+      - name: Validate Compose
+        run: docker compose config --quiet
+
+      - name: Check shell scripts
+        run: shellcheck scripts/*.sh
+
+      - name: Build and run isolated Linux container tests
+        run: |
+          docker build -f nonebot/Dockerfile --target test -t qqbot-nonebot-test .
+          docker run --rm --network none qqbot-nonebot-test
+
+      - name: Build production image
+        run: docker compose build nonebot
+
+      - name: Start production NoneBot with AI disabled
+        run: |
+          mkdir -p data/nonebot
+          sudo chown 1000:1000 data/nonebot
+          docker compose up -d --no-deps --wait --wait-timeout 90 nonebot
+          docker compose exec -T nonebot python -c "import sqlite3; connection = sqlite3.connect('/app/data/bot.db'); assert connection.execute('PRAGMA quick_check').fetchone() == ('ok',); connection.close()"
+
+      - name: Remove test containers
+        if: always()
+        run: docker compose down --remove-orphans

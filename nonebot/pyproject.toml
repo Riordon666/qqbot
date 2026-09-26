@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling==1.32.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "qqbot"
+version = "0.1.0"
+description = "A modular, low-resource QQ group bot built on NoneBot2 and OneBot 11."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "aiosqlite==0.22.1",
+    "httpx==0.28.1",
+    "nonebot-adapter-onebot==2.4.6",
+    "nonebot2[fastapi]==2.5.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/qqbot"]
+
+[tool.nonebot]
+plugins = [
+    "qqbot.plugins.basic",
+    "qqbot.plugins.admin",
+    "qqbot.plugins.ai_chat",
+    "qqbot.plugins.router",
+]
+plugin_dirs = []
+builtin_plugins = []
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+asyncio_mode = "auto"
+pythonpath = ["src"]
+testpaths = ["tests"]

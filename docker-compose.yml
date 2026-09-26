@@ -1,0 +1,121 @@
+name: qqbot
+
+services:
+  nonebot:
+    build:
+      context: .
+      dockerfile: nonebot/Dockerfile
+      target: runtime
+      args:
+        PYTHON_IMAGE: "python:3.12-slim-bookworm@sha256:0f5b26b9518d002b6173fd61daad821fa340635ebfec5bba471013f9ca114579"
+        UV_VERSION: "0.12.7"
+    image: qqbot-nonebot:0.1.0
+    container_name: qqbot-nonebot
+    restart: unless-stopped
+    init: true
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
+    environment:
+      BOT_NAME: "${BOT_NAME:-QQBot}"
+      BOT_NICKNAME: "${BOT_NICKNAME:-}"
+      SUPERUSERS: "${SUPERUSERS:-}"
+      COMMAND_START: "${COMMAND_START:-/}"
+      BOT_TIMEZONE: "${BOT_TIMEZONE:-}"
+      ALLOWED_GROUPS: "${ALLOWED_GROUPS:-}"
+      BLOCKED_GROUPS: "${BLOCKED_GROUPS:-}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+      DRIVER: "${DRIVER:-~fastapi}"
+      HOST: "${HOST:-0.0.0.0}"
+      PORT: "${PORT:-8080}"
+      ONEBOT_ACCESS_TOKEN: "${ONEBOT_ACCESS_TOKEN:?ONEBOT_ACCESS_TOKEN is required}"
+      DATABASE_PATH: "${DATABASE_PATH:-/app/data/bot.db}"
+      AI_ENABLED: "${AI_ENABLED:-false}"
+      AI_PRIVATE_MODE: "${AI_PRIVATE_MODE:-all}"
+      AI_GROUP_MODE: "${AI_GROUP_MODE:-mention}"
+      AI_BASE_URL: "${AI_BASE_URL:-}"
+      AI_API_KEY: "${AI_API_KEY:-}"
+      AI_MODEL: "${AI_MODEL:-}"
+      AI_TIMEOUT_SECONDS: "${AI_TIMEOUT_SECONDS:-45}"
+      AI_MAX_HISTORY_MESSAGES: "${AI_MAX_HISTORY_MESSAGES:-24}"
+      AI_MAX_CONTEXT_CHARS: "${AI_MAX_CONTEXT_CHARS:-24000}"
+      AI_MAX_REPLY_CHARS: "${AI_MAX_REPLY_CHARS:-3000}"
+      AI_COOLDOWN_SECONDS: "${AI_COOLDOWN_SECONDS:-2}"
+      AI_MAX_CONCURRENCY: "${AI_MAX_CONCURRENCY:-5}"
+      AI_SUMMARY_TRIGGER_MESSAGES: "${AI_SUMMARY_TRIGGER_MESSAGES:-24}"
+      AI_SUMMARY_KEEP_RECENT_MESSAGES: "${AI_SUMMARY_KEEP_RECENT_MESSAGES:-8}"
+      AI_SUMMARY_MAX_CHARS: "${AI_SUMMARY_MAX_CHARS:-3000}"
+      AI_SKILLS_MAX_TOTAL_CHARS: "${AI_SKILLS_MAX_TOTAL_CHARS:-12000}"
+      AI_SYSTEM_PROMPT_PATH: "/app/prompts/core.md"
+      AI_PERSONA_PROMPT_PATH: "/app/prompts/persona.md"
+      AI_SUMMARY_PROMPT_PATH: "/app/prompts/summary.md"
+      AI_SKILLS_PATH: "/app/skills"
+    volumes:
+      - ./data/nonebot:/app/data
+      - ./nonebot/prompts:/app/prompts:ro
+      - ./nonebot/skills:/app/skills:ro
+    expose:
+      - "8080"
+    networks:
+      - qqbot
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=2).read()"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    stop_grace_period: 20s
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  napcat:
+    image: "${NAPCAT_IMAGE:-mlikiowa/napcat-docker:v4.18.19@sha256:1336a777f9a4f1f8cb89fef42f7548deacd3645919a067a50df5b66b5e77390e}"
+    pull_policy: missing
+    container_name: qqbot-napcat
+    restart: unless-stopped
+    init: true
+    depends_on:
+      nonebot:
+        condition: service_healthy
+    environment:
+      NAPCAT_UID: "${NAPCAT_UID:-1000}"
+      NAPCAT_GID: "${NAPCAT_GID:-1000}"
+      WEBUI_TOKEN: "${NAPCAT_WEBUI_TOKEN:?NAPCAT_WEBUI_TOKEN is required}"
+      ACCOUNT: "${NAPCAT_ACCOUNT:?NAPCAT_ACCOUNT is required}"
+      NAPCAT_QUICK_PASSWORD_MD5: "${NAPCAT_QUICK_PASSWORD_MD5:-}"
+    volumes:
+      - ./napcat/config:/app/napcat/config
+      - ./napcat/qq:/app/.config/QQ
+    ports:
+      - "127.0.0.1:6099:6099"
+    networks:
+      - qqbot
+    mac_address: "02:42:ac:11:00:02"
+    shm_size: "256m"
+    pids_limit: 768
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 45s
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  qqbot:
+    name: qqbot_private
+    driver: bridge

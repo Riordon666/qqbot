@@ -1,0 +1,48 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.token
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+nonebot/.venv/
+.uv-cache/
+.uv-python/
+.release-tools/
+.test-tmp*/
+
+# Runtime data
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+logs/
+backups/*
+!backups/.gitkeep
+
+# NoneBot data
+data/*
+!data/nonebot/
+data/nonebot/*
+!data/nonebot/.gitkeep
+
+# NapCat and QQ credentials/state
+napcat/config/*
+!napcat/config/.gitkeep
+napcat/qq/*
+!napcat/qq/.gitkeep
+
+# Local tooling
+.DS_Store
+Thumbs.db
+.coverage
+htmlcov/
